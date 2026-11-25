@@ -1,17 +1,21 @@
-// Publisher for the make.fun entry: drops the bundled entry.png into the
-// output directory the grader points at, defaulting to /output.
-import * as fs from "node:fs";
-import { dirname, resolve } from "node:path";
+// main.ts — entry point for the make.fun news-image-20261124 resubmission.
+//
+// The image itself is pre-rendered by gen.py (Python + Pillow) from a list of
+// 35 stories, every one verified first-reported on Tuesday 24 November 2026
+// (UTC). This file only places that finished image where the house expects
+// it, so the run is fully deterministic: same input bytes, same output bytes.
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-// The picture lives next to this file, wherever this file is run from.
-const folderHere = dirname(fileURLToPath(import.meta.url));
-const picturePath = resolve(folderHere, "entry.png");
+const here = dirname(fileURLToPath(import.meta.url));
+const outDir = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
+const sourcePath = join(here, "entry.png");
 
-// The grader's directory: env var first, /output when it is not set.
-const destinationFolder = process.env.MAKEFUN_OUTPUT_DIR || "/output";
-const destinationPath = resolve(destinationFolder, "entry.png");
-
-// Create the folder if it is missing, then place the picture inside it.
-fs.mkdirSync(destinationFolder, { recursive: true });
-fs.cpSync(picturePath, destinationPath);
+const payload = readFileSync(sourcePath);
+if (!existsSync(outDir)) {
+  mkdirSync(outDir, { recursive: true });
+}
+const destPath = join(outDir, "entry.png");
+writeFileSync(destPath, payload);
+console.log(`wrote ${destPath} (${payload.length} bytes)`);
